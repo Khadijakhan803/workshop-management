@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Workshop Management</h1>
+  <form id="createWorkshopForm">
+    <h2>Create Workshop</h2>
+    <input type="text" id="title" placeholder="Title" required>
+    <input type="text" id="description" placeholder="Description" required>
+    <input type="text" id="mentorId" placeholder="Mentor ID" required>
+    <button type="submit">Create Workshop</button>
+  </form>
+  <form id="addActivityForm">
+    <h2>Add Activity to Workshop</h2>
+    <input type="text" id="workshopId" placeholder="Workshop ID" required>
+    <input type="text" id="activityTitle" placeholder="Activity Title" required>
+    <input type="text" id="activityDescription" placeholder="Activity Description" required>
+    <input type="datetime-local" id="activityStartTime" required>
+    <input type="datetime-local" id="activityEndTime" required>
+    <input type="text" id="activityLocation" placeholder="Activity Location" required>
+    <button type="submit">Add Activity</button>
+  </form>
+
+  <!-- Form to Enroll in a Workshop -->
+  <form id="enrollWorkshopForm">
+    <h2>Enroll in Workshop</h2>
+    <input type="text" id="enrollWorkshopId" placeholder="Workshop ID" required>
+    <input type="text" id="learnerId" placeholder="Learner ID" required>
+    <button type="submit">Enroll</button>
+  </form>
+
+  <!-- Display Workshops -->
+  <h2>Workshops List</h2>
+  <button onclick="fetchWorkshops()">Refresh Workshops</button>
+  <table id="workshopsTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Mentor ID</th>
+        <th>Activities</th>
+        <th>Enrolled Learners</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const API_URL = 'http://localhost:5000/api/workshops';
+    const socket = io('http://localhost:5000');
+    async function fetchWorkshops() {
+      try {
+        const response = await fetch(API_URL);
+        const workshops = await response.json();
+        const tableBody = document.querySelector('#workshopsTable tbody');
+        tableBody.innerHTML = '';
+
+        workshops.forEach(workshop => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${workshop._id}</td>
+            <td>${workshop.title}</td>
+            <td>${workshop.description}</td>
+            <td>${workshop.mentor}</td>
+            <td>${workshop.activities.map(activity => activity.title).join(', ')}</td>
+            <td>${workshop.enrolledLearners.join(', ')}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching workshops:', error);
+      }
+    }
+    document.getElementById('createWorkshopForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const mentorId = document.getElementById('mentorId').value;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, mentorId }),
+        });
+        const data = await response.json();
+        alert('Workshop created successfully!');
+        fetchWorkshops();
+      } catch (error) {
+        console.error('Error creating workshop:', error);
+      }
+    });
+    document.getElementById('addActivityForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const workshopId = document.getElementById('workshopId').value;
+      const title = document.getElementById('activityTitle').value;
+      const description = document.getElementById('activityDescription').value;
+      const startTime = document.getElementById('activityStartTime').value;
+      const endTime = document.getElementById('activityEndTime').value;
+      const location = document.getElementById('activityLocation').value;
+
+      try {
+        const response = await fetch(`${API_URL}/${workshopId}/activities`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, startTime, endTime, location }),
+        });
+        const data = await response.json();
+        alert('Activity added successfully!');
+        fetchWorkshops();
+      } catch (error) {
+        console.error('Error adding activity:', error);
+      }
+    });
+    document.getElementById('enrollWorkshopForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const workshopId = document.getElementById('enrollWorkshopId').value;
+      const learnerId = document.getElementById('learnerId').value;
+
+      try {
+        const response = await fetch(`${API_URL}/${workshopId}/enroll`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ learnerId }),
+        });
+        const data = await response.json();
+        alert('Enrollment successful!');
+        fetchWorkshops();
+      } catch (error) {
+        console.error('Error enrolling in workshop:', error);
+      }
+    });
+    socket.on('enrollment', (data) => {
+      alert(`New Enrollment: ${data.message}`);
+      console.log('Enrollment Notification:', data);
+    });
+    socket.on('enrollmentConfirmed', (data) => {
+      alert(`Enrollment Confirmed: ${data.message}`);
+      console.log('Enrollment Confirmation:', data);
+    });
+
+    fetchWorkshops();
+  </script>
+</body>
+</html>
