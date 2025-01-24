@@ -2,7 +2,8 @@
 
 This is a backend system designed to manage skill workshops, with features for real-time enrollment management, notifications, and integration with third-party tools like Google Calendar.
 
-Watch on loom: https://www.loom.com/share/6dfb7095f81041f1b0db653d403a1c74?sid=3eac3d77-4eba-49ac-b666-5074e11ee4b3
+[![Watch the Demo](https://www.loom.com/share/6dfb7095f81041f1b0db653d403a1c74?sid=3eac3d77-4eba-49ac-b666-5074e11ee4b3)](https://www.loom.com/share/6dfb7095f81041f1b0db653d403a1c74?sid=1389d4d5-0d03-48db-8dbd-317ea09293f6)
+
 
 ## Features
 
